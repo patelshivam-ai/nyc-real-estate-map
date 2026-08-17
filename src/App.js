@@ -168,22 +168,8 @@ export default function App() {
 
   const currentYear = Math.floor(displayYear || parseFloat(selectedYear || years[0]));
 
-  // build column data for current year
-  const columnData = Object.keys(centroids).map((nta) => {
-    const d = priceData[`${nta}_${currentYear}`];
-    if (!d || isNaN(d.relative) || isNaN(d.yoy)) return null;
-    return {
-      nta,
-      coordinates: [centroids[nta].lng, centroids[nta].lat],
-      yoy: d.yoy,
-      relative: d.relative,
-    };
-  }).filter(Boolean);
-
   // normalize yoy for height — clamp between -30% and +30%
   const MAX_YOY = 30;
-  const BASE_HEIGHT = 50;
-  const MAX_HEIGHT = 300;
 
   const layers = geojson
     ? [
