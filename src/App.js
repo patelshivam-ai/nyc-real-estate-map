@@ -60,7 +60,7 @@ export default function App() {
   const [geojson, setGeojson] = useState(null);
   const [priceData, setPriceData] = useState({});
   const [citywideData, setCitywideData] = useState({});
-  const [centroids, setCentroids] = useState({});
+    const [centroids, setCentroids] = useState({}); // eslint-disable-line no-unused-vars
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [displayYear, setDisplayYear] = useState(null);
