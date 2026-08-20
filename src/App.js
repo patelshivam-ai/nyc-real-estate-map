@@ -204,7 +204,7 @@ export default function App() {
             const n1 = Math.min(Math.max(yoy1 / MAX_YOY, -1), 1);
             const n2 = Math.min(Math.max(yoy2 / MAX_YOY, -1), 1);
 
-            return BASE + (n1 + (n2 - n1) * t) * 1500;
+            return BASE + (n1 + (n2 - n1) * t) * 6000;
           },
           getFillColor: (feature) => {
             const nta = feature.properties.NTA2020;
