@@ -197,14 +197,14 @@ export default function App() {
             const d1 = priceData[`${nta}_${yearFloor}`];
             const d2 = priceData[`${nta}_${yearCeil}`];
 
-            const BASE = 2000;
+            const BASE = 5000;
             const yoy1 = d1 && !isNaN(d1.yoy) ? d1.yoy : 0;
             const yoy2 = d2 && !isNaN(d2.yoy) ? d2.yoy : 0;
 
             const n1 = Math.min(Math.max(yoy1 / MAX_YOY, -1), 1);
             const n2 = Math.min(Math.max(yoy2 / MAX_YOY, -1), 1);
 
-            return BASE + (n1 + (n2 - n1) * t) * 6000;
+            return BASE + (n1 + (n2 - n1) * t) * 3000;
           },
           getFillColor: (feature) => {
             const nta = feature.properties.NTA2020;
