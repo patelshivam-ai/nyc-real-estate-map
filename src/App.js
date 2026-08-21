@@ -8,9 +8,8 @@ const INITIAL_VIEW = {
   longitude: -73.98,
   latitude: 40.7,
   zoom: 10,
-  pitch: 45,
+  pitch: 0,
   bearing: 0,
-  touchRotate: true,
 };
 
 function parseCSV(text) {
@@ -24,43 +23,31 @@ function parseCSV(text) {
   });
 }
 
-function lerpColor(c1, c2, t) {
-  const r = Math.round(c1[0] + (c2[0] - c1[0]) * t);
-  const g = Math.round(c1[1] + (c2[1] - c1[1]) * t);
-  const b = Math.round(c1[2] + (c2[2] - c1[2]) * t);
-  const brightness = r + g + b;
-  if (brightness < 100) {
-    const boost = (100 - brightness) / 3;
-    return [
-      Math.min(255, r + boost),
-      Math.min(255, g + boost),
-      Math.min(255, b + boost),
-      180,
-    ];
-  }
-  return [r, g, b, 180];
-}
-
 function getColorForValue(relative) {
-  const t = 1 - Math.min(Math.max((relative + 100) / 200, 0), 1);
+  // relative is % above/below citywide median
+  // clamp to -100 to +100
+  const clamped = Math.min(Math.max(relative, -100), 100);
+  const t = (clamped + 100) / 200; // 0 = far below, 1 = far above
+
   let r, g, b;
   if (t < 0.5) {
-    r = 255;
-    g = Math.round(255 * (t / 0.5));
-    b = 0;
-  } else {
-    r = Math.round(255 * (1 - (t - 0.5) / 0.5));
+    // green to yellow
+    r = Math.round(255 * (t / 0.5));
     g = 200;
     b = 0;
+  } else {
+    // yellow to red
+    r = 255;
+    g = Math.round(200 * (1 - (t - 0.5) / 0.5));
+    b = 0;
   }
-  return [r, g, b];
+  return [r, g, b, 200];
 }
 
 export default function App() {
   const [geojson, setGeojson] = useState(null);
   const [priceData, setPriceData] = useState({});
   const [citywideData, setCitywideData] = useState({});
-    const [centroids, setCentroids] = useState({}); // eslint-disable-line no-unused-vars
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [displayYear, setDisplayYear] = useState(null);
@@ -80,7 +67,6 @@ export default function App() {
         const byNtaYear = {};
         const yearSet = new Set();
         const citywideByYear = {};
-        const centroidMap = {};
 
         rows.forEach((row) => {
           const key = `${row.NTA2020}_${parseInt(row.Year)}`;
@@ -89,39 +75,20 @@ export default function App() {
             median: parseFloat(row.median_price_per_sqft),
             count: parseInt(row.transaction_count),
             yoy: parseFloat(row.yoy_change),
-            lng: parseFloat(row.centroid_lng),
-            lat: parseFloat(row.centroid_lat),
           };
           yearSet.add(row.Year);
           const yr = parseInt(row.Year);
           if (!citywideByYear[yr]) {
             citywideByYear[yr] = parseFloat(row.citywide_median);
           }
-          if (!centroidMap[row.NTA2020]) {
-            centroidMap[row.NTA2020] = {
-              lng: parseFloat(row.centroid_lng),
-              lat: parseFloat(row.centroid_lat),
-            };
-          }
         });
 
         const sortedYears = [...yearSet].sort();
         setPriceData(byNtaYear);
         setCitywideData(citywideByYear);
-        setCentroids(centroidMap);
         setYears(sortedYears);
         setSelectedYear(sortedYears[0]);
         setDisplayYear(parseFloat(sortedYears[0]));
-
-        // compute average yoy for 2004 and assign to 2003
-        const avg2004Yoy = Object.keys(byNtaYear)
-          .filter(k => k.endsWith("_2004"))
-          .map(k => byNtaYear[k].yoy)
-          .filter(v => !isNaN(v));
-        const mean2004 = avg2004Yoy.reduce((a, b) => a + b, 0) / avg2004Yoy.length;
-        Object.keys(byNtaYear)
-          .filter(k => k.endsWith("_2003"))
-          .forEach(k => { byNtaYear[k].yoy = mean2004; });
       });
   }, []);
 
@@ -157,82 +124,28 @@ export default function App() {
 
       if (!d1valid && !d2valid) return [100, 100, 100, 180];
       if (!d1valid) return [100, 100, 100, 180];
-      if (!d2valid) return [...getColorForValue(d1.relative), 180];
+
+      if (!d2valid) return getColorForValue(d1.relative);
 
       const c1 = getColorForValue(d1.relative);
       const c2 = getColorForValue(d2.relative);
-      return lerpColor(c1, c2, t);
+
+      return [
+        Math.round(c1[0] + (c2[0] - c1[0]) * t),
+        Math.round(c1[1] + (c2[1] - c1[1]) * t),
+        Math.round(c1[2] + (c2[2] - c1[2]) * t),
+        200,
+      ];
     },
     [priceData, selectedYear, displayYear]
   );
 
   const currentYear = Math.floor(displayYear || parseFloat(selectedYear || years[0]));
-
-  // normalize yoy for height — clamp between -30% and +30%
-  const MAX_YOY = 30;
+  const sliderYear = years.findIndex(y => Math.floor(parseFloat(y)) === currentYear);
+  const maxCitywide = Math.max(...Object.values(citywideData).filter(v => !isNaN(v)));
 
   const layers = geojson
     ? [
-        // 1. extruded bars
-        new GeoJsonLayer({
-          id: "bars",
-          data: geojson,
-          extruded: true,
-          filled: true,
-          stroked: false,
-          pickable: true,
-          onHover: ({ object, x, y }) => {
-            if (!object) return setTooltip(null);
-            const nta = object.properties.NTA2020;
-            const year = Math.floor(displayYear || parseFloat(selectedYear));
-            const d = priceData[`${nta}_${year}`];
-            setTooltip({ x, y, name: object.properties.NTAName, data: d });
-          },
-          getElevation: (feature) => {
-            const nta = feature.properties.NTA2020;
-            const yearFloor = Math.floor(displayYear || parseFloat(selectedYear));
-            const yearCeil = yearFloor + 1;
-            const t = (displayYear || parseFloat(selectedYear)) - yearFloor;
-
-            const d1 = priceData[`${nta}_${yearFloor}`];
-            const d2 = priceData[`${nta}_${yearCeil}`];
-
-            const BASE = 5000;
-            const yoy1 = d1 && !isNaN(d1.yoy) ? d1.yoy : 0;
-            const yoy2 = d2 && !isNaN(d2.yoy) ? d2.yoy : 0;
-
-            const n1 = Math.min(Math.max(yoy1 / MAX_YOY, -1), 1);
-            const n2 = Math.min(Math.max(yoy2 / MAX_YOY, -1), 1);
-
-            return BASE + (n1 + (n2 - n1) * t) * 3000;
-          },
-          getFillColor: (feature) => {
-            const nta = feature.properties.NTA2020;
-            const yearFloor = Math.floor(displayYear || parseFloat(selectedYear));
-            const yearCeil = yearFloor + 1;
-            const t = (displayYear || parseFloat(selectedYear)) - yearFloor;
-
-            const d1 = priceData[`${nta}_${yearFloor}`];
-            const d2 = priceData[`${nta}_${yearCeil}`];
-
-            const d1valid = d1 && !isNaN(d1.relative);
-            const d2valid = d2 && !isNaN(d2.relative);
-
-            const dark = [100, 100, 100];
-
-            const c1 = d1valid ? getColorForValue(d1.relative) : dark;
-            const c2 = d2valid ? getColorForValue(d2.relative) : dark;
-
-            const blended = lerpColor(c1, c2, t);
-            return [...blended.slice(0, 3), 255];
-          },
-          updateTriggers: {
-            getElevation: [displayYear],
-            getFillColor: [displayYear],
-          },
-        }),
-
-        // 2. flat map coloring
         new GeoJsonLayer({
           id: "nta",
           data: geojson,
@@ -240,7 +153,7 @@ export default function App() {
           stroked: true,
           extruded: false,
           getFillColor: getColor,
-          getLineColor: [255, 255, 255, 100],
+          getLineColor: [255, 255, 255, 60],
           getLineWidth: 1,
           lineWidthMinPixels: 1,
           pickable: true,
@@ -256,17 +169,14 @@ export default function App() {
       ]
     : [];
 
-  const sliderYear = years.findIndex(y => Math.floor(parseFloat(y)) === currentYear);
-  const maxCitywide = Math.max(...Object.values(citywideData).filter(v => !isNaN(v)));
-
   return (
     <div style={{ width: "100vw", height: "100vh", display: "flex", background: "#1a1a2e" }}>
 
       {/* LEFT PANEL - MAP */}
-      <div style={{ flex: 1, position: "relative" }} onContextMenu={(e) => e.preventDefault()}>
+      <div style={{ flex: 1, position: "relative" }}>
         <DeckGL
           initialViewState={INITIAL_VIEW}
-          controller={{ dragRotate: true, dragPan: true, scrollZoom: true, touchRotate: true, keyboard: true, inertia: 300 }}
+          controller={true}
           layers={layers}
         >
           <Map mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json" />
@@ -331,9 +241,6 @@ export default function App() {
               background: "linear-gradient(to right, #00c800, #ffff00, #ff0000)",
             }} />
             <span>Above average</span>
-          </div>
-          <div style={{ color: "white", fontFamily: "sans-serif", fontSize: 12, opacity: 0.7 }}>
-            Bar height = year-over-year price change percentage
           </div>
         </div>
 
