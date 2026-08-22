@@ -24,15 +24,15 @@ function parseCSV(text) {
 }
 
 function getColorForValue(relative) {
-  // Data reality: Bronx clusters ~-65%, Manhattan clusters ~+170%
-  // Map -80% → deep green, -30% → green, +20% → yellow, +100% → orange-red, +220% → deep red
-  // These breakpoints match the actual quartiles so colors spread meaningfully
+  // Stops anchored to actual data percentiles:
+  // -66% = Bronx bottom, -6% = citywide median neighborhood, +70% = inner Brooklyn/Queens top, +210% = Manhattan top
   const stops = [
-    { val: -80,  r: 0,   g: 160, b: 60  },  // deep green
-    { val: -30,  r: 80,  g: 200, b: 0   },  // green
-    { val:  20,  r: 255, g: 200, b: 0   },  // yellow (near median neighborhood)
-    { val: 100,  r: 255, g: 60,  b: 0   },  // orange-red
-    { val: 220,  r: 180, g: 0,   b: 20  },  // deep crimson
+    { val: -66,  r: 0,   g: 180, b: 80  },  // deep green  (Bronx bottom)
+    { val: -30,  r: 100, g: 210, b: 0   },  // green       (25th pct)
+    { val:  -6,  r: 255, g: 220, b: 0   },  // yellow      (median neighborhood)
+    { val:  70,  r: 255, g: 80,  b: 0   },  // orange      (75th pct)
+    { val: 140,  r: 220, g: 20,  b: 0   },  // red         (90th pct)
+    { val: 210,  r: 140, g: 0,   b: 30  },  // deep crimson (Manhattan top)
   ];
 
   const clamped = Math.min(Math.max(relative, stops[0].val), stops[stops.length - 1].val);
