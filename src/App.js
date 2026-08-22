@@ -24,23 +24,36 @@ function parseCSV(text) {
 }
 
 function getColorForValue(relative) {
-  // clamp to -200% to +200% for wider spread
-  const clamped = Math.min(Math.max(relative, -200), 200);
-  const t = (clamped + 200) / 400; // 0 = far below, 1 = far above
+  // center is 0, original ±100 range preserved, extended outward
+  // below -100: deep blue-green; above +100: deep crimson
+  const clamped = Math.min(Math.max(relative, -150), 150);
+  const t = (clamped + 150) / 300; // 0 = -150%, 0.333 = -100%, 0.5 = 0%, 0.667 = +100%, 1 = +150%
 
   let r, g, b;
-  if (t < 0.5) {
-    // deep green → yellow
-    const u = t / 0.5; // 0→1
-    r = Math.round(220 * u);
-    g = Math.round(80 + 120 * u); // starts at a richer green (80→200)
-    b = Math.round(40 * (1 - u));  // slight blue tint at the bottom
-  } else {
-    // yellow → deep red
-    const u = (t - 0.5) / 0.5; // 0→1
+  if (t < 0.333) {
+    // deep teal-green (new extension below -100%)
+    const u = t / 0.333;
+    r = 0;
+    g = Math.round(120 + 80 * u);  // 120 → 200
+    b = Math.round(80 * (1 - u));  // 80 → 0
+  } else if (t < 0.5) {
+    // green → yellow (original -100% to 0%)
+    const u = (t - 0.333) / 0.167;
+    r = Math.round(255 * u);
+    g = 200;
+    b = 0;
+  } else if (t < 0.667) {
+    // yellow → red (original 0% to +100%)
+    const u = (t - 0.5) / 0.167;
     r = 255;
     g = Math.round(200 * (1 - u));
-    b = Math.round(30 * u); // slight blue tint at the top end
+    b = 0;
+  } else {
+    // deep crimson (new extension above +100%)
+    const u = (t - 0.667) / 0.333;
+    r = Math.round(255 * (1 - u * 0.4));  // 255 → 153
+    g = 0;
+    b = Math.round(30 * u);  // 0 → 30
   }
   return [r, g, b, 210];
 }
