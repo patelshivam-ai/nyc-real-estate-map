@@ -27,12 +27,12 @@ function getColorForValue(relative) {
   // Stops anchored to actual data percentiles:
   // -66% = Bronx bottom, -6% = citywide median neighborhood, +70% = inner Brooklyn/Queens top, +210% = Manhattan top
   const stops = [
-    { val: -66,  r: 0,   g: 180, b: 80  },  // deep green  (Bronx bottom)
-    { val: -30,  r: 100, g: 210, b: 0   },  // green       (25th pct)
-    { val:  -6,  r: 255, g: 220, b: 0   },  // yellow      (median neighborhood)
-    { val:  70,  r: 255, g: 80,  b: 0   },  // orange      (75th pct)
-    { val: 140,  r: 220, g: 20,  b: 0   },  // red         (90th pct)
-    { val: 210,  r: 140, g: 0,   b: 30  },  // deep crimson (Manhattan top)
+    { val: -66,  r: 0,   g: 120, b: 60  },  // deep forest green (Bronx bottom)
+    { val: -30,  r: 0,   g: 190, b: 20  },  // green             (25th pct)
+    { val:  -6,  r: 255, g: 220, b: 0   },  // yellow            (median neighborhood)
+    { val:  70,  r: 255, g: 80,  b: 0   },  // orange            (75th pct)
+    { val: 140,  r: 220, g: 20,  b: 0   },  // red               (90th pct)
+    { val: 210,  r: 140, g: 0,   b: 30  },  // deep crimson      (Manhattan top)
   ];
 
   const clamped = Math.min(Math.max(relative, stops[0].val), stops[stops.length - 1].val);
@@ -269,8 +269,7 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
               <div style={{
                 width: 300, height: 12, borderRadius: 4,
-                background: "linear-gradient(to right, #00b450, #64d200, #ffdc00, #ff5000, #dc1400, #8c001e)",
-              }} />
+                background: "linear-gradient(to right, #00783c, #00be14, #ffdc00, #ff5000, #dc1400, #8c001e)",              }} />
               <div style={{ display: "flex", justifyContent: "center", width: 300, fontSize: 10, opacity: 0.6 }}>
                 <span>Average</span>
               </div>
