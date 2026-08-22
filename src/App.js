@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import DeckGL from "@deck.gl/react";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import { Map } from "react-map-gl/maplibre";
@@ -63,6 +63,7 @@ export default function App() {
   const [playing, setPlaying] = useState(false);
   const [tooltip, setTooltip] = useState(null);
   const [speed, setSpeed] = useState(1);
+  const sliderRef = useRef(null);
 
   useEffect(() => {
     fetch("/nta.geojson")
@@ -103,15 +104,19 @@ export default function App() {
 
   useEffect(() => {
     if (!playing) return;
+    const minYear = parseFloat(years[0]);
+    const maxYear = parseFloat(years[years.length - 1]);
     const interval = setInterval(() => {
       setDisplayYear((prev) => {
-        const maxYear = parseFloat(years[years.length - 1]);
         if (prev >= maxYear) {
           setPlaying(false);
           return prev;
         }
         const next = prev + 0.015;
         setSelectedYear(String(Math.floor(next)));
+        if (sliderRef.current) {
+          sliderRef.current.value = ((next - minYear) / (maxYear - minYear)) * (years.length - 1);
+        }
         return next;
       });
     }, 16 / speed);
@@ -171,11 +176,7 @@ export default function App() {
   );
 
   const currentYear = Math.floor(displayYear || parseFloat(selectedYear || years[0]));
-  const minYear = parseFloat(years[0]);
-  const maxYear = parseFloat(years[years.length - 1]);
-  const sliderValue = playing
-    ? ((displayYear - minYear) / (maxYear - minYear)) * (years.length - 1)
-    : years.findIndex(y => Math.floor(parseFloat(y)) === currentYear);
+  const sliderValue = years.findIndex(y => Math.floor(parseFloat(y)) === currentYear);
   const maxCitywide = Math.max(...Object.values(citywideData).filter(v => !isNaN(v)));
 
   const layers = geojson
@@ -234,11 +235,13 @@ export default function App() {
           zIndex: 1,
         }}>
           <input
+            ref={sliderRef}
             type="range"
             min={0}
             max={years.length - 1}
-            value={sliderValue >= 0 ? sliderValue : 0}
+            defaultValue={0}
             onChange={(e) => {
+              if (playing) return;
               const y = years[parseInt(e.target.value)];
               setSelectedYear(y);
               setDisplayYear(parseFloat(y));
