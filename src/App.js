@@ -62,7 +62,7 @@ export default function App() {
   const [displayYear, setDisplayYear] = useState(null);
   const [playing, setPlaying] = useState(false);
   const [tooltip, setTooltip] = useState(null);
-  const [speed, setSpeed] = useState(0.5);
+  const [speed, setSpeed] = useState(1);
 
   useEffect(() => {
     fetch("/nta.geojson")
@@ -233,7 +233,7 @@ export default function App() {
             type="range"
             min={0}
             max={years.length - 1}
-            value={sliderYear >= 0 ? sliderYear : 0}
+            value={displayYear !== null ? Math.min(displayYear - parseFloat(years[0]), years.length - 1) : 0}
             onChange={(e) => {
               const y = years[parseInt(e.target.value)];
               setSelectedYear(y);
@@ -265,12 +265,20 @@ export default function App() {
             {playing ? "Pause" : "Play"}
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "white", fontFamily: "sans-serif", fontSize: 12 }}>
-            <span>Below average</span>
-            <div style={{
-              width: 200, height: 12, borderRadius: 4,
-              background: "linear-gradient(to right, #00c800, #ffff00, #ff0000)",
-            }} />
-            <span>Above average</span>
+            <span style={{ whiteSpace: "nowrap" }}>-66%</span>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+              <div style={{
+                width: 300, height: 12, borderRadius: 4,
+                background: "linear-gradient(to right, #00b450, #64d200, #ffdc00, #ff5000, #dc1400, #8c001e)",
+              }} />
+              <div style={{ display: "flex", justifyContent: "space-between", width: 300, fontSize: 10, opacity: 0.6 }}>
+                <span>-30%</span>
+                <span>-6%</span>
+                <span>+70%</span>
+                <span>+140%</span>
+              </div>
+            </div>
+            <span style={{ whiteSpace: "nowrap" }}>+210%</span>
           </div>
         </div>
 
