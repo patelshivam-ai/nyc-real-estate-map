@@ -232,15 +232,12 @@ export default function App() {
           <input
             type="range"
             min={0}
-            max={1000}
-            value={displayYear !== null ? Math.min(((displayYear - parseFloat(years[0])) / (parseFloat(years[years.length - 1]) - parseFloat(years[0]))) * 1000, 1000) : 0}
+            max={years.length - 1}
+            value={Math.min(Math.round(displayYear - parseFloat(years[0])), years.length - 1)}
             onChange={(e) => {
-              const t = parseInt(e.target.value) / 1000;
-              const minY = parseFloat(years[0]);
-              const maxY = parseFloat(years[years.length - 1]);
-              const val = minY + t * (maxY - minY);
-              setDisplayYear(val);
-              setSelectedYear(String(Math.floor(val)));
+              const y = years[parseInt(e.target.value)];
+              setSelectedYear(y);
+              setDisplayYear(parseFloat(y));
             }}
             style={{ width: 500 }}
           />
