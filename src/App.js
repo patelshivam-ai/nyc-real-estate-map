@@ -24,38 +24,33 @@ function parseCSV(text) {
 }
 
 function getColorForValue(relative) {
-  // center is 0, original ±100 range preserved, extended outward
-  // below -100: deep blue-green; above +100: deep crimson
-  const clamped = Math.min(Math.max(relative, -150), 150);
-  const t = (clamped + 150) / 300; // 0 = -150%, 0.333 = -100%, 0.5 = 0%, 0.667 = +100%, 1 = +150%
+  // Data reality: Bronx clusters ~-65%, Manhattan clusters ~+170%
+  // Map -80% → deep green, -30% → green, +20% → yellow, +100% → orange-red, +220% → deep red
+  // These breakpoints match the actual quartiles so colors spread meaningfully
+  const stops = [
+    { val: -80,  r: 0,   g: 160, b: 60  },  // deep green
+    { val: -30,  r: 80,  g: 200, b: 0   },  // green
+    { val:  20,  r: 255, g: 200, b: 0   },  // yellow (near median neighborhood)
+    { val: 100,  r: 255, g: 60,  b: 0   },  // orange-red
+    { val: 220,  r: 180, g: 0,   b: 20  },  // deep crimson
+  ];
 
-  let r, g, b;
-  if (t < 0.333) {
-    // deep teal-green (new extension below -100%)
-    const u = t / 0.333;
-    r = 0;
-    g = Math.round(120 + 80 * u);  // 120 → 200
-    b = Math.round(80 * (1 - u));  // 80 → 0
-  } else if (t < 0.5) {
-    // green → yellow (original -100% to 0%)
-    const u = (t - 0.333) / 0.167;
-    r = Math.round(255 * u);
-    g = 200;
-    b = 0;
-  } else if (t < 0.667) {
-    // yellow → red (original 0% to +100%)
-    const u = (t - 0.5) / 0.167;
-    r = 255;
-    g = Math.round(200 * (1 - u));
-    b = 0;
-  } else {
-    // deep crimson (new extension above +100%)
-    const u = (t - 0.667) / 0.333;
-    r = Math.round(255 * (1 - u * 0.4));  // 255 → 153
-    g = 0;
-    b = Math.round(30 * u);  // 0 → 30
+  const clamped = Math.min(Math.max(relative, stops[0].val), stops[stops.length - 1].val);
+
+  for (let i = 0; i < stops.length - 1; i++) {
+    const lo = stops[i], hi = stops[i + 1];
+    if (clamped <= hi.val) {
+      const t = (clamped - lo.val) / (hi.val - lo.val);
+      return [
+        Math.round(lo.r + (hi.r - lo.r) * t),
+        Math.round(lo.g + (hi.g - lo.g) * t),
+        Math.round(lo.b + (hi.b - lo.b) * t),
+        210,
+      ];
+    }
   }
-  return [r, g, b, 210];
+  const last = stops[stops.length - 1];
+  return [last.r, last.g, last.b, 210];
 }
 
 export default function App() {
