@@ -110,7 +110,7 @@ export default function App() {
           setPlaying(false);
           return prev;
         }
-        const next = prev + 0.005;
+        const next = prev + 0.015;
         setSelectedYear(String(Math.floor(next)));
         return next;
       });
@@ -132,9 +132,30 @@ export default function App() {
       const d2valid = d2 && !isNaN(d2.relative);
 
       if (!d1valid && !d2valid) return [100, 100, 100, 180];
-      if (!d1valid) return [100, 100, 100, 180];
 
-      if (!d2valid) return getColorForValue(d1.relative);
+      const gray = [100, 100, 100];
+
+      if (!d1valid) {
+        // transitioning from gray into color
+        const c2 = getColorForValue(d2.relative);
+        return [
+          Math.round(gray[0] + (c2[0] - gray[0]) * t),
+          Math.round(gray[1] + (c2[1] - gray[1]) * t),
+          Math.round(gray[2] + (c2[2] - gray[2]) * t),
+          180,
+        ];
+      }
+
+      if (!d2valid) {
+        // transitioning from color into gray
+        const c1 = getColorForValue(d1.relative);
+        return [
+          Math.round(c1[0] + (gray[0] - c1[0]) * t),
+          Math.round(c1[1] + (gray[1] - c1[1]) * t),
+          Math.round(c1[2] + (gray[2] - c1[2]) * t),
+          180,
+        ];
+      }
 
       const c1 = getColorForValue(d1.relative);
       const c2 = getColorForValue(d2.relative);
