@@ -232,12 +232,15 @@ export default function App() {
           <input
             type="range"
             min={0}
-            max={years.length - 1}
-            value={displayYear !== null ? Math.min(displayYear - parseFloat(years[0]), years.length - 1) : 0}
+            max={1000}
+            value={displayYear !== null ? Math.min(((displayYear - parseFloat(years[0])) / (parseFloat(years[years.length - 1]) - parseFloat(years[0]))) * 1000, 1000) : 0}
             onChange={(e) => {
-              const y = years[parseInt(e.target.value)];
-              setSelectedYear(y);
-              setDisplayYear(parseFloat(y));
+              const t = parseInt(e.target.value) / 1000;
+              const minY = parseFloat(years[0]);
+              const maxY = parseFloat(years[years.length - 1]);
+              const val = minY + t * (maxY - minY);
+              setDisplayYear(val);
+              setSelectedYear(String(Math.floor(val)));
             }}
             style={{ width: 500 }}
           />
@@ -265,20 +268,17 @@ export default function App() {
             {playing ? "Pause" : "Play"}
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "white", fontFamily: "sans-serif", fontSize: 12 }}>
-            <span style={{ whiteSpace: "nowrap" }}>-66%</span>
+            <span style={{ whiteSpace: "nowrap" }}>Below average</span>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
               <div style={{
                 width: 300, height: 12, borderRadius: 4,
                 background: "linear-gradient(to right, #00b450, #64d200, #ffdc00, #ff5000, #dc1400, #8c001e)",
               }} />
-              <div style={{ display: "flex", justifyContent: "space-between", width: 300, fontSize: 10, opacity: 0.6 }}>
-                <span>-30%</span>
-                <span>-6%</span>
-                <span>+70%</span>
-                <span>+140%</span>
+              <div style={{ display: "flex", justifyContent: "center", width: 300, fontSize: 10, opacity: 0.6 }}>
+                <span>Average</span>
               </div>
             </div>
-            <span style={{ whiteSpace: "nowrap" }}>+210%</span>
+            <span style={{ whiteSpace: "nowrap" }}>Above average</span>
           </div>
         </div>
 
