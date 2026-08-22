@@ -24,24 +24,25 @@ function parseCSV(text) {
 }
 
 function getColorForValue(relative) {
-  // relative is % above/below citywide median
-  // clamp to -100 to +100
-  const clamped = Math.min(Math.max(relative, -100), 100);
-  const t = (clamped + 100) / 200; // 0 = far below, 1 = far above
+  // clamp to -200% to +200% for wider spread
+  const clamped = Math.min(Math.max(relative, -200), 200);
+  const t = (clamped + 200) / 400; // 0 = far below, 1 = far above
 
   let r, g, b;
   if (t < 0.5) {
-    // green to yellow
-    r = Math.round(255 * (t / 0.5));
-    g = 200;
-    b = 0;
+    // deep green → yellow
+    const u = t / 0.5; // 0→1
+    r = Math.round(220 * u);
+    g = Math.round(80 + 120 * u); // starts at a richer green (80→200)
+    b = Math.round(40 * (1 - u));  // slight blue tint at the bottom
   } else {
-    // yellow to red
+    // yellow → deep red
+    const u = (t - 0.5) / 0.5; // 0→1
     r = 255;
-    g = Math.round(200 * (1 - (t - 0.5) / 0.5));
-    b = 0;
+    g = Math.round(200 * (1 - u));
+    b = Math.round(30 * u); // slight blue tint at the top end
   }
-  return [r, g, b, 200];
+  return [r, g, b, 210];
 }
 
 export default function App() {
@@ -101,11 +102,11 @@ export default function App() {
           setPlaying(false);
           return prev;
         }
-        const next = prev + 0.02;
+        const next = prev + 0.005;
         setSelectedYear(String(Math.floor(next)));
         return next;
       });
-    }, 50 / speed);
+    }, 16 / speed);
     return () => clearInterval(interval);
   }, [playing, years, speed]);
 
