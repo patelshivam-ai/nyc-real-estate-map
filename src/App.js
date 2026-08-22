@@ -171,7 +171,11 @@ export default function App() {
   );
 
   const currentYear = Math.floor(displayYear || parseFloat(selectedYear || years[0]));
-  const sliderYear = years.findIndex(y => Math.floor(parseFloat(y)) === currentYear);
+  const minYear = parseFloat(years[0]);
+  const maxYear = parseFloat(years[years.length - 1]);
+  const sliderValue = playing
+    ? ((displayYear - minYear) / (maxYear - minYear)) * (years.length - 1)
+    : years.findIndex(y => Math.floor(parseFloat(y)) === currentYear);
   const maxCitywide = Math.max(...Object.values(citywideData).filter(v => !isNaN(v)));
 
   const layers = geojson
@@ -233,7 +237,7 @@ export default function App() {
             type="range"
             min={0}
             max={years.length - 1}
-            value={Math.min(Math.round(displayYear - parseFloat(years[0])), years.length - 1)}
+            value={sliderValue >= 0 ? sliderValue : 0}
             onChange={(e) => {
               const y = years[parseInt(e.target.value)];
               setSelectedYear(y);
